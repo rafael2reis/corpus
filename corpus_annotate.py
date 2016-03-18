@@ -12,6 +12,8 @@ __author__ = "Rafael Reis <rafael2reis@gmail.com>"
 from corpus import CorpusAd
 from corpus import SpeechVerbs
 
+quotesNum = 0
+
 def annotate():
     speechVerbs = SpeechVerbs()
     c = CorpusAd("bosque/Bosque_CP_8.0.ad.txt", speechVerbs)
@@ -19,16 +21,22 @@ def annotate():
     p = c.next()
     while p:
         #f = findPattern(p, speechVerbs, pattern3)
-        #f = findPattern(p, speechVerbs, pattern1)
         #f = findPattern(p, speechVerbs, pattern3NoSubj)
+        #f = findPattern(p, speechVerbs, pattern1)
+        #f = findPattern(p, speechVerbs, pattern1NoSubj)
         #f = findPattern(p, speechVerbs, pattern2)
-        #f = findPattern(p, speechVerbs, pattern7)
+        #f = findPattern(p, speechVerbs, pattern2NoSubj)
         #f = findPattern5(p, speechVerbs, pattern5)
-        f = findPattern6(p, speechVerbs, pattern6)
+        #f = findPattern6(p, speechVerbs, pattern6)
 
         p = c.next()
 
+    print("Quotations number: ", quotesNum)
+
 def findPattern(p, speechVerbs, pattern):
+    global quotesNum
+    exist = False
+
     if p.speechVerb:
         allNodes = p.nodes
         speechNodes = p.speechNodes
@@ -37,10 +45,19 @@ def findPattern(p, speechVerbs, pattern):
             acc, subj = searchAccSubj(allNodes, verbNode)
 
             if pattern(acc, subj, verbNode, speechVerbs):
+                quotesNum += 1
                 printQuotation(p, subj, verbNode, acc)
 
-                return True
-    return False
+                exist = True
+            else:
+                acc, subj = searchAccSubjAdvl(allNodes, verbNode)
+
+                if pattern(acc, subj, verbNode, speechVerbs):
+                    quotesNum += 1
+                    printQuotation(p, subj, verbNode, acc)
+
+                exist = True
+    return exist
 
 def pattern1(acc, subj, verbNode, speechVerbs):
     """ 
@@ -98,6 +115,8 @@ def pattern3NoSubj(acc, subj, verbNode, speechVerbs):
                 and (verbNode.speechVerb in speechVerbs.pattern3))
     
 def findPattern5(p, speechVerbs, pattern):
+    global quotesNum
+
     if p.speechVerb:
         allNodes = p.nodes
         speechNodes = p.speechNodes
@@ -106,6 +125,7 @@ def findPattern5(p, speechVerbs, pattern):
             acc, subj, acc2 = searchAccSubjAcc(allNodes, verbNode)
 
             if pattern(acc, subj, acc2, verbNode, speechVerbs):
+                quotesNum += 1
                 printQuotation(p, subj, verbNode, acc, acc2)
 
                 return True
@@ -123,6 +143,8 @@ def pattern5(acc, subj, acc2, verbNode, speechVerbs):
                 and (verbNode.speechVerb in speechVerbs.pattern5))
 
 def findPattern6(p, speechVerbs, pattern):
+    global quotesNum
+
     if p.speechVerb:
         allNodes = p.nodes
         speechNodes = p.speechNodes
@@ -131,6 +153,7 @@ def findPattern6(p, speechVerbs, pattern):
             acc, subj, acc2 = searchAccSubjMinusAcc(allNodes, verbNode)
 
             if pattern(acc, subj, acc2, verbNode, speechVerbs):
+                quotesNum += 1
                 printQuotation(p, subj, verbNode, acc, acc2)
 
                 return True
@@ -218,7 +241,7 @@ def hasChildQue(acc):
 
 def isValidSubj(subj):
     # TODO ver o txt do SUBJ
-    return subj and subj.txt.lower() != "se"
+    return subj and subj.txt.lower() != "se" and subj.txt.lower() != "que"
 
 def isNotSubj(subj):
     return subj == None
@@ -238,6 +261,30 @@ def searchAccSubj(allNodes, verbNode):
                 accNode = node
             elif node.type == 'SUBJ':
                 subjNode = node
+
+    return accNode, subjNode
+
+def searchAccSubjAdvl(allNodes, verbNode):
+    accNode = None
+    subjNode = None
+    advl = None
+
+    if (verbNode.parent
+        and verbNode.parent.parent
+        and verbNode.parent.parent.parent
+        and verbNode.parent.parent.parent.type == 'ADVL'):
+
+        advl = verbNode.parent.parent.parent
+
+        for node in allNodes:
+            
+            if (node.level == verbNode.parent.level 
+                and node.parent == verbNode.parent.parent
+                and node.type == 'ACC'):
+                    accNode = node
+            elif (node.type == 'SUBJ'
+                and node.level == advl.level):
+                    subjNode = node
 
     return accNode, subjNode
 

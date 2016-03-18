@@ -24,6 +24,7 @@ def groupByFeed(c):
 
     while p:
         p = c.next()
+
         if p:
             if p.index != lastIndex:
                 #print(text, '\n')
@@ -31,7 +32,8 @@ def groupByFeed(c):
 
                 text = p.sentence.replace('\n', "")
                 lastIndex = p.index
-                feed = Feed()
+
+                feed = Feed([])
             else:
                 text += " " + p.sentence
 
@@ -181,11 +183,19 @@ class CorpusAd:
             return m.group('TYPE'), m.group('TAIL'), txt
 
     def getSpeechVerb(self, s):
-        if s and "v-fin" in s and "FUT" not in s:
-            m = re.search(r'.*v-fin\(\'(?P<VERB>(\w|-)+)\'', s)
-            v = m.group('VERB')
+        if s:
+            v = None
+            if ("v-inf" in s):
+                m = re.search(r'.*v-inf\(\'(?P<VERB>(\w|-)+)\'', s)
+                v = m.group('VERB')
+            elif ("v-fin" in s):
+                m = re.search(r'.*v-fin\(\'(?P<VERB>(\w|-)+)\'', s)
+                v = m.group('VERB')
+            elif ("v-ger" in s):
+                m = re.search(r'.*v-ger\(\'(?P<VERB>(\w|-)+)\'', s)
+                v = m.group('VERB')
 
-            if v in self.verbs.all:
+            if v and v in self.verbs.all:
                 return v
         return ''
 
