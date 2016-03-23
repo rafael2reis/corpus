@@ -129,7 +129,8 @@ class CorpusAd:
         return p
 
     def isSentenceBegin(self):
-        return self.raw[self.i] == "<s>\n"
+        #return self.raw[self.i] == "<s>\n"
+        return re.match(r'^<s' , self.raw[self.i])
 
     def isSentenceDescription(self):
         return re.match(r'^C[FP]\d+-\d+' , self.raw[self.i])
@@ -185,14 +186,9 @@ class CorpusAd:
     def getSpeechVerb(self, s):
         if s:
             v = None
-            if ("v-inf" in s):
-                m = re.search(r'.*v-inf\(\'(?P<VERB>(\w|-)+)\'', s)
-                v = m.group('VERB')
-            elif ("v-fin" in s):
+
+            if ("v-fin" in s):
                 m = re.search(r'.*v-fin\(\'(?P<VERB>(\w|-)+)\'', s)
-                v = m.group('VERB')
-            elif ("v-ger" in s):
-                m = re.search(r'.*v-ger\(\'(?P<VERB>(\w|-)+)\'', s)
                 v = m.group('VERB')
 
             if v and v in self.verbs.all:

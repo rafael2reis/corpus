@@ -16,11 +16,11 @@ quotesNum = 0
 
 def annotate():
     speechVerbs = SpeechVerbs()
-    c = CorpusAd("bosque/Bosque_CP_8.0.ad.txt", speechVerbs)
+    c = CorpusAd("bosque/Bosque_CF_8.0.ad.txt", speechVerbs)
 
     p = c.next()
     while p:
-        #f = findPattern(p, speechVerbs, pattern3)
+        f = findPattern(p, speechVerbs, pattern3)
         #f = findPattern(p, speechVerbs, pattern3NoSubj)
         #f = findPattern(p, speechVerbs, pattern1)
         #f = findPattern(p, speechVerbs, pattern1NoSubj)
@@ -42,19 +42,12 @@ def findPattern(p, speechVerbs, pattern):
         speechNodes = p.speechNodes
 
         for verbNode in speechNodes:
+
             acc, subj = searchAccSubj(allNodes, verbNode)
 
             if pattern(acc, subj, verbNode, speechVerbs):
                 quotesNum += 1
                 printQuotation(p, subj, verbNode, acc)
-
-                exist = True
-            else:
-                acc, subj = searchAccSubjAdvl(allNodes, verbNode)
-
-                if pattern(acc, subj, verbNode, speechVerbs):
-                    quotesNum += 1
-                    printQuotation(p, subj, verbNode, acc)
 
                 exist = True
     return exist
@@ -237,11 +230,11 @@ def hasCommaWord(acc, subj):
         return False 
 
 def hasChildQue(acc):
-    return acc.child and acc.child[0].txt and acc.child[0].txt.lower() == "que"
+    return acc.child and acc.child[0].txt and acc.child[0].txt.lower().strip() == "que"
 
 def isValidSubj(subj):
     # TODO ver o txt do SUBJ
-    return subj and subj.txt.lower() != "se" and subj.txt.lower() != "que"
+    return subj and subj.text().lower().strip() != "se" and subj.text().lower().strip() != "que"
 
 def isNotSubj(subj):
     return subj == None
@@ -261,6 +254,9 @@ def searchAccSubj(allNodes, verbNode):
                 accNode = node
             elif node.type == 'SUBJ':
                 subjNode = node
+
+    if accNode and accNode.text().lower().strip() == 'que':
+        accNode = None
 
     return accNode, subjNode
 
@@ -285,6 +281,9 @@ def searchAccSubjAdvl(allNodes, verbNode):
             elif (node.type == 'SUBJ'
                 and node.level == advl.level):
                     subjNode = node
+
+    if accNode and accNode.text().lower().strip() == 'que':
+        accNode = None
 
     return accNode, subjNode
 
