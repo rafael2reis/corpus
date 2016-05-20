@@ -85,7 +85,7 @@ class CorpusAd:
                 p.sentence = self.getSentenceDescription()
             elif self.isSource():
                 p.index = self.getPieceIndex()
-            elif self.isValidLevel():
+            elif self.isValidLevel() or self.raw[self.i] == "\"\n" or self.raw[self.i] == ",\n":
                 currLevel = self.getCurrentLevel()
 
                 newNode = Node()
@@ -99,6 +99,9 @@ class CorpusAd:
 
                 speechVerb = self.getSpeechVerb(newNode.stype)
                 newNode.speechVerb = speechVerb
+
+                newNode.anterior = lastNode
+                lastNode.posterior = newNode
 
                 if currLevel > lastNode.level: # Child from lastNode
                     newNode.parent = lastNode
@@ -114,6 +117,27 @@ class CorpusAd:
                     newNode.parent.child[-1].next = newNode
                     newNode.previous = newNode.parent.child[-1]
                 newNode.parent.child.append(newNode)
+
+                """ # FLORESTA
+                if currLevel > lastNode.level and lastNode.level != 0: # Child from lastNode
+                    newNode.parent = lastNode
+                elif currLevel == lastNode.level: # Sibbling of lastNode
+                    newNode.parent = lastNode.parent
+                    newNode.previous = lastNode
+                    lastNode.next = newNode
+                elif currLevel == 0 or lastNode.level == 0:
+                    newNode.previous = lastNode
+                    lastNode.next = newNode
+                elif lastNode.parent:
+                    newNode.parent = lastNode.parent
+                    while newNode.parent and newNode.parent.level >= newNode.level and newNode.parent.parent:
+                        newNode.parent = newNode.parent.parent
+
+                    newNode.parent.child[-1].next = newNode
+                    newNode.previous = newNode.parent.child[-1]
+                
+                if newNode.parent:
+                    newNode.parent.child.append(newNode)"""
 
                 lastNode = newNode
                 p.nodes.append(newNode)
@@ -145,7 +169,7 @@ class CorpusAd:
         return 1
 
     def getSentenceDescription(self):
-        m = re.search(r'^C[FP]\d+-\d+\w* (?P<SENT>.+)$', self.raw[self.i])
+        m = re.search(r'^C[FP]\d+-\d+\w*( )?(?P<SENT>.+)$', self.raw[self.i])
         s = m.group('SENT')
 
         return s
@@ -164,7 +188,7 @@ class CorpusAd:
         return len(levels)
 
     def getPieceIndex(self):
-        m = re.search(r' n=(?P<INDEX>\d+) ', self.raw[self.i])
+        m = re.search(r' n=(?P<INDEX>\d+) ', self.raw[self.i]) or re.search(r' id=(?P<INDEX>\d+) ', self.raw[self.i])
         if not m:
             raise NameError('SOURCE: sem n=\d+ : ' + self.raw[self.i])
         return int(m.group('INDEX'))
@@ -175,7 +199,7 @@ class CorpusAd:
         if len(info) == 1 or info.find(":") == -1:
             return info, None, info
         else:
-            m = re.search(r'(?P<TYPE>.+):(?P<TAIL>.+)$', info)
+            m = re.search(r'(?P<TYPE>.+):(?P<TAIL>.*)$', info)
             txt = ''
             if info.find(")") > 0:
                 n = re.search(r'\)([ \t]*)(?P<TEXT>[^ ]*)$', info)
@@ -188,7 +212,7 @@ class CorpusAd:
             v = None
 
             if ("v-fin" in s):
-                m = re.search(r'.*v-fin\(\'(?P<VERB>(\w|-)+)\'', s)
+                m = re.search(r'.*v-fin\(\'(?P<VERB>(\w|-)+)\'', s) or re.search(r'.*v-fin\(\"(?P<VERB>(\w|-)+)\"', s)
                 v = m.group('VERB')
 
             if v and v in self.verbs.all:
@@ -276,6 +300,8 @@ class Node:
         self.level = level
         self.txt = ''
         self.raw = ''
+        self.posterior = None
+        self.anterior = None
 
     def text(self):
         t = self.txt
