@@ -1,0 +1,48 @@
+# Citações:
+
+## Corpus: Bosque Público (CP)
+   * Padrão 1: 112 + 34<nosubj>
+   * Padrão 2: 1 + 1<nosubj>
+   * Padrão 3: 130 + 51<nosubj>
+   * Padrão 4:
+   * Padrão 5: 0
+   * Padrão 6: 15
+
+   * Total: 344
+
+   * feeds:  978
+   * tokens:  135,949
+   * sentences:  5,140
+
+## Corpus: Bosque Folha (CF)
+   * Padrão 1: 46 + 19<nosubj>
+   * Padrão 2: 0
+   * Padrão 3: 187 + 19<nosubj>
+   * Padrão 4:
+   * Padrão 5: 0
+   * Padrão 6: 3
+
+   * Total: 274
+
+   * feeds:  984
+   * tokens:  80,636
+   * sentences:  4,211
+
+## Corpus: Floresta-part (CF)
+   * Padrão 1: 119
+   * Padrão 3: 192
+
+   * Total: 311
+
+## Total:
+   * Padrão 1: 155
+   * Padrão 2: 31
+   * Padrão 3: 350
+   * Padrão 4:
+   * Padrão 5:
+   * Padrão 6: 19
+   * Total: 555 + 128 = 683 + 192 + 119
+
+   * feeds: 1,962
+   * tokens:  216,585
+   * sentences:  9,351

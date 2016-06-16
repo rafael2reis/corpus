@@ -57,6 +57,10 @@ class CorpusAd:
         if not fileName:
             raise InvalidArgumentException('You must inform a valid fileName!')
 
+        self.isFloresta = False
+        if "Floresta" in fileName:
+            self.isFloresta = True
+
         with open(fileName, 'r') as f:
             self.raw = f.readlines()
         self.i = 0 # Index of the last line read. It'll be used in the "next" method.
@@ -103,41 +107,42 @@ class CorpusAd:
                 newNode.anterior = lastNode
                 lastNode.posterior = newNode
 
-                if currLevel > lastNode.level: # Child from lastNode
-                    newNode.parent = lastNode
-                elif currLevel == lastNode.level: # Sibbling of lastNode
-                    newNode.parent = lastNode.parent
-                    newNode.previous = lastNode
-                    lastNode.next = newNode
-                else: #currLevel < previousLevel
-                    newNode.parent = lastNode.parent
-                    while newNode.parent.level >= newNode.level:
-                        newNode.parent = newNode.parent.parent
+                # Node traversing depends on if Corpus is Floresta or Bosque
+                if self.isFloresta:
+                    if currLevel > lastNode.level and lastNode.level != 0: # Child from lastNode
+                        newNode.parent = lastNode
+                    elif currLevel == lastNode.level: # Sibbling of lastNode
+                        newNode.parent = lastNode.parent
+                        newNode.previous = lastNode
+                        lastNode.next = newNode
+                    elif currLevel == 0 or lastNode.level == 0:
+                        newNode.previous = lastNode
+                        lastNode.next = newNode
+                    elif lastNode.parent:
+                        newNode.parent = lastNode.parent
+                        while newNode.parent and newNode.parent.level >= newNode.level and newNode.parent.parent:
+                            newNode.parent = newNode.parent.parent
 
-                    newNode.parent.child[-1].next = newNode
-                    newNode.previous = newNode.parent.child[-1]
-                newNode.parent.child.append(newNode)
+                        newNode.parent.child[-1].next = newNode
+                        newNode.previous = newNode.parent.child[-1]
+                    
+                    if newNode.parent:
+                        newNode.parent.child.append(newNode)
+                else: # Corpus is Bosque
+                    if currLevel > lastNode.level: # Child from lastNode
+                        newNode.parent = lastNode
+                    elif currLevel == lastNode.level: # Sibbling of lastNode
+                        newNode.parent = lastNode.parent
+                        newNode.previous = lastNode
+                        lastNode.next = newNode
+                    else: #currLevel < previousLevel
+                        newNode.parent = lastNode.parent
+                        while newNode.parent.level >= newNode.level:
+                            newNode.parent = newNode.parent.parent
 
-                """ # FLORESTA
-                if currLevel > lastNode.level and lastNode.level != 0: # Child from lastNode
-                    newNode.parent = lastNode
-                elif currLevel == lastNode.level: # Sibbling of lastNode
-                    newNode.parent = lastNode.parent
-                    newNode.previous = lastNode
-                    lastNode.next = newNode
-                elif currLevel == 0 or lastNode.level == 0:
-                    newNode.previous = lastNode
-                    lastNode.next = newNode
-                elif lastNode.parent:
-                    newNode.parent = lastNode.parent
-                    while newNode.parent and newNode.parent.level >= newNode.level and newNode.parent.parent:
-                        newNode.parent = newNode.parent.parent
-
-                    newNode.parent.child[-1].next = newNode
-                    newNode.previous = newNode.parent.child[-1]
-                
-                if newNode.parent:
-                    newNode.parent.child.append(newNode)"""
+                        newNode.parent.child[-1].next = newNode
+                        newNode.previous = newNode.parent.child[-1]
+                    newNode.parent.child.append(newNode)
 
                 lastNode = newNode
                 p.nodes.append(newNode)

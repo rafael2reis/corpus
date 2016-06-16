@@ -25,14 +25,14 @@ class Annotator:
         p = corpus.next()
         
         while p:
-            f = self.findPattern(p, self.speechVerbs, self.pattern3)
-            #f = findPattern(p, speechVerbs, pattern3NoSubj)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern1)
-            #f = findPattern(p, speechVerbs, pattern1NoSubj)
-            #f = findPattern(p, speechVerbs, pattern2)
-            #f = findPattern(p, speechVerbs, pattern2NoSubj)
-            #f = findPattern5(p, speechVerbs, pattern5)
-            #f = findPattern6(p, speechVerbs, pattern6)
+            f = self.findPattern(p, self.speechVerbs, self.pattern1)
+            #f = self.findPattern(p, self.speechVerbs, self.pattern1NoSubj)
+            #f = self.findPattern(p, self.speechVerbs, self.pattern2)
+            #f = self.findPattern(p, self.speechVerbs, self.pattern2NoSubj)
+            #f = self.findPattern(p, self.speechVerbs, self.pattern3)
+            #f = self.findPattern(p, self.speechVerbs, self.pattern3NoSubj)
+            #f = self.findPattern5(p, self.speechVerbs, self.pattern5)
+            #f = self.findPattern6(p, self.speechVerbs, self.pattern6)
 
             p = corpus.next()
 
@@ -49,7 +49,6 @@ class Annotator:
         #f = findPattern6(p, speechVerbs, pattern6)
 
     def findPattern(self, p, speechVerbs, pattern):
-        global quotesNum
         exist = False
 
         if p.speechVerb:
@@ -169,7 +168,7 @@ class Annotator:
 
                 if pattern(acc, subj, acc2, verbNode, speechVerbs):
                     self.quotesNum += 1
-                    printQuotation(p, subj, verbNode, acc, acc2)
+                    self.printQuotation(p, subj, verbNode, acc, acc2)
 
                     return True
         return False
