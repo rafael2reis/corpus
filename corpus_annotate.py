@@ -281,7 +281,7 @@ class Annotator:
         for node in allNodes:
             if (node.level == verbNode.level 
                 and node.parent == verbNode.parent):
-                #print("# ", node.raw)
+
                 if node.type == 'Od' or node.type == '-Od':
                     #print("accNode: ", node.raw)
                     accNode = node

@@ -107,26 +107,39 @@ class CorpusAd:
                 newNode.anterior = lastNode
                 lastNode.posterior = newNode
 
+                #print("########################")
+                #print("# raw: ", newNode.raw)
+                #print("# level: ", newNode.level)
+
                 # Node traversing depends on if Corpus is Floresta or Bosque
                 if self.isFloresta:
                     if currLevel > lastNode.level and lastNode.level != 0: # Child from lastNode
                         newNode.parent = lastNode
+                        #print("DEBUG 1")
                     elif currLevel == lastNode.level: # Sibbling of lastNode
                         newNode.parent = lastNode.parent
                         newNode.previous = lastNode
                         lastNode.next = newNode
+                        #print("DEBUG 2")
                     elif currLevel == 0 or lastNode.level == 0:
                         newNode.previous = lastNode
                         lastNode.next = newNode
+                        #print("DEBUG 3")
                     elif lastNode.parent:
+                        #print("DEBUG 4")
                         newNode.parent = lastNode.parent
-                        while newNode.parent and newNode.parent.level >= newNode.level and newNode.parent.parent:
-                            newNode.parent = newNode.parent.parent
+                        while newNode.parent and newNode.parent.level >= newNode.level:
+                            if newNode.parent.parent:
+                                newNode.parent = newNode.parent.parent
+                            else:
+                                newNode.parent = None
 
-                        newNode.parent.child[-1].next = newNode
-                        newNode.previous = newNode.parent.child[-1]
+                        if newNode.parent:
+                            newNode.parent.child[-1].next = newNode
+                            newNode.previous = newNode.parent.child[-1]
                     
                     if newNode.parent:
+                        #print("# parent: ", newNode.parent.raw)
                         newNode.parent.child.append(newNode)
                 else: # Corpus is Bosque
                     if currLevel > lastNode.level: # Child from lastNode
