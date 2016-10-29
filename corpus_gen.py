@@ -11,6 +11,7 @@ __author__ = "Rafael Reis <rafael2reis@gmail.com>"
 
 import re
 import corpus
+from corpus_annotate import Annotator
 
 def gen():
     speechVerbs = corpus.SpeechVerbs()
@@ -23,18 +24,47 @@ def gen():
 
     quantTokens = 0
     quantSentences = 0
+    quantQuotes = 0
+
+    speechVerbs = corpus.SpeechVerbs()
+    ca = Annotator(speechVerbs)
 
     for feed in feeds:
-        #print('#' + str(lineNum))
-        #print('##')
+        print('#' + str(lineNum))
+        print('##')
+        index = 0
 
         for piece in feed.pieces:
-            print(piece.index)
+            #print(piece.index)
             quantSentences += 1
+            ca.annotate(piece)
+
+            isQuote = False
             for node in piece.nodes:
                 if isValidToken(node.raw):
                     quantTokens += 1
-                    #print(fmtToken.format(node.txt) + node.pos)
+
+                    if node.quote:
+                        isQuote = True
+                    quote = str(index) if node.quote else '-'
+                    author = str(index) if node.author else '-'
+                    dep = node.dep if node.dep else '-'
+
+                    """
+                    print(fmtToken.format(node.txt) 
+                            + fmtToken.format(node.pos)
+                            + fmtToken.format(author)
+                            + fmtToken.format(quote))
+                    """
+                    print(node.txt 
+                            + '\t' + node.pos
+                            + '\t' + dep
+                            + '\t' + author
+                            + '\t' + quote)
+
+            if isQuote:
+                quantQuotes += 1
+                index += 1
 
         #print("")
         lineNum += 1
@@ -42,6 +72,7 @@ def gen():
     print("Quant. feeds: ", len(feeds))
     print("Quant. tokens: ", quantTokens)
     print("Quant. sentences: ", quantSentences)
+    print("Quant. quotes: ", quantQuotes)
 
 def isValidToken(txt):
     return not re.search(r'[\w<]+\:[\w\(\)<>]+$' , txt, re.M)

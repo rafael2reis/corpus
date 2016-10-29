@@ -61,6 +61,8 @@ class CorpusAd:
         if "Floresta" in fileName:
             self.isFloresta = True
 
+        self.fileName = fileName
+
         with open(fileName, 'r') as f:
             self.raw = f.readlines()
         self.i = 0 # Index of the last line read. It'll be used in the "next" method.
@@ -86,7 +88,7 @@ class CorpusAd:
         while not self.isSentenceEnd():
 
             if self.isSentenceDescription():
-                p.sentence = self.getSentenceDescription()
+                p.id, p.sentence = self.getSentenceDescription()
             elif self.isSource():
                 p.index = self.getPieceIndex()
             elif self.isValidLevel() or self.raw[self.i] == "\"\n" or self.raw[self.i] == ",\n":
@@ -187,10 +189,11 @@ class CorpusAd:
         return 1
 
     def getSentenceDescription(self):
-        m = re.search(r'^C[FP]\d+-\d+\w*( )?(?P<SENT>.+)$', self.raw[self.i])
+        m = re.search(r'^(?P<ID>C[FP]\d+-\d+)\w*( )?(?P<SENT>.+)$', self.raw[self.i])
+        i = m.group('ID')
         s = m.group('SENT')
 
-        return s
+        return i, s
 
     def isSentenceEnd(self):
         return self.raw[self.i] == "</s>\n"
@@ -304,6 +307,7 @@ class Piece:
         self.speechNodes = []
         self.speechVerb = ""
         self.index = 0
+        self.id = ""
 
 class Node:
 
@@ -320,6 +324,9 @@ class Node:
         self.raw = ''
         self.posterior = None
         self.anterior = None
+        self.quote = False
+        self.author = False
+        self.dep = ''
 
     def text(self):
         t = self.txt
@@ -330,6 +337,24 @@ class Node:
             t += c.text()
 
         return t
+
+    def markQuote(self):
+        self.quote = True
+
+        for c in self.child:
+            c.markQuote()
+
+    def markAuthor(self):
+        self.author = True
+
+        for c in self.child:
+            c.markAuthor()
+
+    def markDep(self, label):
+        self.dep = label
+
+        for c in self.child:
+            c.markDep(label)
 
 class InvalidArgumentException(Exception):
     pass

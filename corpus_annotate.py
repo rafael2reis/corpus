@@ -16,39 +16,126 @@ class Annotator:
     def __init__(self, speechVerbs=None, isFloresta=False):
         self.speechVerbs = speechVerbs
         self.isFloresta = isFloresta
-        self.quotesNum = 0
+        self.quotesNum = {}
+        self.files = {}
+        self.fileName = ''
 
     def annotateAll(self, corpus=None):
         #speechVerbs = SpeechVerbs()
         #c = CorpusAd("bosque/Bosque_CF_8.0.ad.txt", speechVerbs)
         #c = CorpusAd("floresta/FlorestaVirgem_CF_3.0_part.ad", speechVerbs)
+        self.setFileName(corpus)
+        self.openFiles()
+
         p = corpus.next()
         
         while p:
-            f = self.findPattern(p, self.speechVerbs, self.pattern1)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern1NoSubj)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern2)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern2NoSubj)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern3)
-            #f = self.findPattern(p, self.speechVerbs, self.pattern3NoSubj)
-            #f = self.findPattern5(p, self.speechVerbs, self.pattern5)
-            #f = self.findPattern6(p, self.speechVerbs, self.pattern6)
-
+            f = self.findPattern(p, self.speechVerbs, self.pattern3, '3')
+            """
+            f = self.findPattern(p, self.speechVerbs, self.pattern1, '1')
+            f = self.findPattern(p, self.speechVerbs, self.pattern1NoSubj, '1ns')
+            f = self.findPattern(p, self.speechVerbs, self.pattern2, '2')
+            f = self.findPattern(p, self.speechVerbs, self.pattern2NoSubj, '2ns')
+            f = self.findPattern(p, self.speechVerbs, self.pattern3, '3')
+            f = self.findPattern(p, self.speechVerbs, self.pattern3NoSubj, '3ns')
+            if not self.isFloresta:
+                f = self.findPattern5(p, self.speechVerbs, self.pattern5)
+                f = self.findPattern6(p, self.speechVerbs, self.pattern6)
+            """
             p = corpus.next()
 
-        print("Quotations number: ", self.quotesNum)
+        self.writeQuotationsNumber()
+        self.closeFiles()
+        #print("Quotations number: ", self.quotesNum)
 
-    def annotate(self, piece=None):
+    def setFileName(self, corpus):
+        corpusFileName = corpus.fileName
+        if "Floresta" in corpusFileName:
+            self.fileName = "flo_cf_padrao"
+        else:
+            if "CF" in corpusFileName:
+                self.fileName = "bos_cf_padrao"
+            else:
+                self.fileName = "bos_cp_padrao"
+
+    def openFiles(self):
+        for x in range(1, 7):
+            self.files[str(x) + '_small'] = open(self.fileName + str(x) + '_small.txt', 'w')
+            self.files[str(x) + 'ns_small'] = open(self.fileName + str(x) + '_small_nosubj.txt', 'w')
+            self.files[str(x) + '_big'] = open(self.fileName + str(x) + '_big.txt', 'w')
+            self.files[str(x) + 'ns_big'] = open(self.fileName + str(x) + '_big_nosubj.txt', 'w')
+            
+            self.quotesNum[str(x) + '_small'] = 0
+            self.quotesNum[str(x) + 'ns_small'] = 0
+            self.quotesNum[str(x) + '_big'] = 0
+            self.quotesNum[str(x) + 'ns_big'] = 0
+
+    def writeQuotationsNumber(self):
+        for x in range(1, 7):
+            self.files[str(x) + '_small'].write("Quotations number: " + str(self.quotesNum[str(x) + '_small']))
+            self.files[str(x) + 'ns_small'].write("Quotations number: " + str(self.quotesNum[str(x) + 'ns_small']))
+            self.files[str(x) + '_big'].write("Quotations number: " + str(self.quotesNum[str(x) + '_big']))
+            self.files[str(x) + 'ns_big'].write("Quotations number: " + str(self.quotesNum[str(x) + 'ns_big']))
+
+    def closeFiles(self):
+        for x in range(1, 7):
+            self.files[str(x) + '_small'].close()
+            self.files[str(x) + 'ns_small'].close()
+            self.files[str(x) + '_big'].close()
+            self.files[str(x) + 'ns_big'].close()
+
+    def annotate(self, p=None):
+        if p.speechVerb:
+            allNodes = p.nodes
+            speechNodes = p.speechNodes
+
+            for verbNode in speechNodes:
+                acc, subj = self.findAccSubj(allNodes, verbNode)
+
+                if (self.pattern1(acc, subj, verbNode, self.speechVerbs)
+                    or self.pattern3(acc, subj, verbNode, self.speechVerbs)
+                    or self.pattern2(acc, subj, verbNode, self.speechVerbs)):
+
+                    #print("ACHOU 1, 2 ou 3")
+
+                    acc.markQuote()
+                    subj.markAuthor()
+                else:
+                    # Searches for Pattern 5
+                    acc, subj, acc2 = None, None, None
+
+                    if self.isFloresta:
+                        acc, subj, acc2 = self.searchAccSubjAccFloresta(allNodes, verbNode)
+                    else:
+                        acc, subj, acc2 = self.searchAccSubjAcc(allNodes, verbNode)
+
+                    if self.pattern5(acc, subj, acc2, verbNode, self.speechVerbs):
+                        #print("ACHOU 5")
+
+                        acc.markQuote()
+                        acc2.markQuote()
+                        subj.markAuthor()
+                    else:
+                        # Searches for Pattern 6
+                        acc, subj, acc2 = self.searchAccSubjMinusAcc(allNodes, verbNode)
+
+                        if self.pattern6(acc, subj, acc2, verbNode, self.speechVerbs):
+                            #print("ACHOU 6")
+
+                            acc.markQuote()
+                            acc2.markQuote()
+                            subj.markAuthor()
+
         #f = findPattern(p, speechVerbs, pattern3)
         #f = findPattern(p, speechVerbs, pattern3NoSubj)
-        f = self.findPattern(p, self.speechVerbs, self.pattern1)
+        #f = self.findPattern(p, self.speechVerbs, self.pattern1)
         #f = findPattern(p, speechVerbs, pattern1NoSubj)
         #f = findPattern(p, speechVerbs, pattern2)
         #f = findPattern(p, speechVerbs, pattern2NoSubj)
         #f = findPattern5(p, speechVerbs, pattern5)
         #f = findPattern6(p, speechVerbs, pattern6)
 
-    def findPattern(self, p, speechVerbs, pattern):
+    def findPattern(self, p, speechVerbs, pattern, number):
         exist = False
 
         if p.speechVerb:
@@ -64,11 +151,22 @@ class Annotator:
                     acc, subj = self.searchAccSubj(allNodes, verbNode)
 
                 if pattern(acc, subj, verbNode, speechVerbs):
-                    self.quotesNum += 1
-                    self.printQuotation(p, subj, verbNode, acc)
+                    acc.markQuote()
+                    subj.markAuthor()
+                    #self.saveQuote(p, subj, verbNode, acc, number)
 
                     exist = True
         return exist
+
+    def saveQuote(self, p, subj, verbNode, acc, number):
+        # CHANGE: tirar o IF ============
+        if len(p.sentence) <= 140:
+            self.quotesNum[number + '_small'] += 1
+            self.writeQuotation(self.files[number + '_small'], p, subj, verbNode, acc)
+        else:
+            self.quotesNum[number + '_big'] += 1
+            self.writeQuotation(self.files[number + '_big'], p, subj, verbNode, acc)
+        # CHANGE ============
 
     def pattern1(self, acc, subj, verbNode, speechVerbs):
         """ 
@@ -140,8 +238,7 @@ class Annotator:
                     acc, subj, acc2 = self.searchAccSubjAcc(allNodes, verbNode)
 
                 if pattern(acc, subj, acc2, verbNode, speechVerbs):
-                    self.quotesNum += 1
-                    printQuotation(p, subj, verbNode, acc, acc2)
+                    self.saveQuote(p, subj, verbNode, acc, '5')
 
                     return True
         return False
@@ -167,8 +264,7 @@ class Annotator:
                 acc, subj, acc2 = self.searchAccSubjMinusAcc(allNodes, verbNode)
 
                 if pattern(acc, subj, acc2, verbNode, speechVerbs):
-                    self.quotesNum += 1
-                    self.printQuotation(p, subj, verbNode, acc, acc2)
+                    self.saveQuote(p, subj, verbNode, acc, '6')
 
                     return True
         return False
@@ -197,7 +293,21 @@ class Annotator:
                     and (self.hasCommaWord(acc, verbNode) or self.hasCommaWord(acc, subj))
                     and (verbNode.speechVerb in speechVerbs.pattern7))
 
+    def writeQuotation(self, file, p, subj, verbNode, acc, acc2=None):
+        file.write(p.id + '\n')
+        file.write(p.sentence + '\n')
+        if subj:
+            file.write("QUEM: " + subj.text() + '\n')
+        else:
+            file.write("QUEM: <nosubj>" + '\n')
+        file.write(verbNode.txt + '\n')
+        acc2Text = ""
+        if acc2:
+            acc2Text = acc2.text()
+        file.write("O QUE: " + acc.text() + acc2Text + '\n\n')
+
     def printQuotation(self, p, subj, verbNode, acc, acc2=None):
+        print(p.id)
         print(p.sentence)
         if subj:
             print("QUEM: " + subj.text())
@@ -274,6 +384,14 @@ class Annotator:
     def isNoSubjVerb(self, verbNode):
         return "<nosubj>" in verbNode.stype
 
+    def findAccSubj(self, allNodes, verbNode):
+        if self.isFloresta:
+            acc, subj = self.searchAccSubjFloresta(allNodes, verbNode)
+        else:
+            acc, subj = self.searchAccSubj(allNodes, verbNode)
+
+        return acc, subj
+
     def searchAccSubjFloresta(self, allNodes, verbNode):
         accNode = None
         subjNode = None
@@ -297,10 +415,27 @@ class Annotator:
         accNode = None
         subjNode = None
 
+        leftFromVerb = True
+        indexChild = 1
+
         for node in allNodes:
-            
+
             if (node.level == verbNode.parent.level 
                 and node.parent == verbNode.parent.parent):
+
+                if node.txt not in ('.', ',', '»', ':'):
+                    if node.line == verbNode.parent.line:
+                        node.markDep('PAI')
+                        leftFromVerb = False
+                        indexChild = 1
+                    elif leftFromVerb:
+                        node.markDep('FILHO_L' + str(indexChild))
+                        indexChild += 1
+                    else:
+                        node.markDep('FILHO_R' + str(indexChild))
+                        indexChild += 1
+
+                # Defines ACC, SUBJ labels:
                 if node.type == 'ACC':
                     accNode = node
                 elif node.type == 'SUBJ':
