@@ -15,28 +15,57 @@ from corpus_annotate import Annotator
 
 def gen():
     speechVerbs = corpus.SpeechVerbs()
-    c = corpus.CorpusAd("bosque/Bosque_CF_8.0.ad.txt", speechVerbs)
 
-    feeds = corpus.groupByFeed(c)
-    lineNum = 0
-
-    fmtToken = '{0:50}'
-
+    quantFeeds = 0
     quantTokens = 0
     quantSentences = 0
     quantQuotes = 0
 
+    lineNum = 0
+
+    # fmtToken = '{0:50}'
+
+    cps = []
+    cps.append( corpus.CorpusAd("bosque/Bosque_CF_8.0.ad.txt", speechVerbs) )
+    cps.append( corpus.CorpusAd("bosque/Bosque_CP_8.0.ad.txt", speechVerbs) )
+    cps.append( corpus.CorpusAd("floresta/FlorestaVirgem_CF_3.0_sub.ad", speechVerbs) )
+
+    for c in cps:
+        f, t, s, q = genByCorpus(c, lineNum)
+
+        quantFeeds += f
+        quantTokens += t
+        quantSentences += s
+        quantQuotes += q
+
+    print("Quant. feeds: ", quantFeeds)
+    print("Quant. tokens: ", quantTokens)
+    print("Quant. sentences: ", quantSentences)
+    print("Quant. quotes: ", quantQuotes)
+
+def genByCorpus(c, lineNum):
+    quantTokens = 0
+    quantSentences = 0
+    quantQuotes = 0
+
+    feeds = corpus.groupByFeed(c)
+
     speechVerbs = corpus.SpeechVerbs()
-    ca = Annotator(speechVerbs)
+    ca = Annotator(speechVerbs, isFloresta=c.isFloresta)
 
     for feed in feeds:
         print('#' + str(lineNum))
-        print('##')
+        print('##' + feed.pieces[0].source)
         index = 0
 
+        indexSpeechVerb = 1
         for piece in feed.pieces:
             #print(piece.index)
             quantSentences += 1
+            if piece.speechVerb:
+                piece.indexSpeechVerb = indexSpeechVerb
+                indexSpeechVerb += 1
+
             ca.annotate(piece)
 
             isQuote = False
@@ -69,10 +98,7 @@ def gen():
         #print("")
         lineNum += 1
 
-    print("Quant. feeds: ", len(feeds))
-    print("Quant. tokens: ", quantTokens)
-    print("Quant. sentences: ", quantSentences)
-    print("Quant. quotes: ", quantQuotes)
+    return len(feeds), quantTokens, quantSentences, quantQuotes
 
 def isValidToken(txt):
     return not re.search(r'[\w<]+\:[\w\(\)<>]+$' , txt, re.M)

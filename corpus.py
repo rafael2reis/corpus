@@ -91,6 +91,7 @@ class CorpusAd:
                 p.id, p.sentence = self.getSentenceDescription()
             elif self.isSource():
                 p.index = self.getPieceIndex()
+                p.source = self.raw[self.i].replace('\n', '');
             elif self.isValidLevel() or self.raw[self.i] == "\"\n" or self.raw[self.i] == ",\n":
                 currLevel = self.getCurrentLevel()
 
@@ -220,7 +221,8 @@ class CorpusAd:
         if len(info) == 1 or info.find(":") == -1:
             return info, None, info
         else:
-            m = re.search(r'(?P<TYPE>.+):(?P<TAIL>.*)$', info)
+            #m = re.search(r'(?P<TYPE>.+):(?P<TAIL>.*)$', info)
+            m = re.search(r'(?P<TYPE>(.+?)):(?P<TAIL>.*)$', info)
             txt = ''
             if info.find(")") > 0:
                 n = re.search(r'\)([ \t]*)(?P<TEXT>[^ ]*)$', info)
@@ -308,6 +310,8 @@ class Piece:
         self.speechVerb = ""
         self.index = 0
         self.id = ""
+        self.indexSpeechVerb = 0
+        self.source = ""
 
 class Node:
 
