@@ -19,6 +19,7 @@ class Annotator:
         self.quotesNum = {}
         self.files = {}
         self.fileName = ''
+        self.indexSpeechVerb = 1
 
     def annotateAll(self, corpus=None):
         #speechVerbs = SpeechVerbs()
@@ -90,7 +91,7 @@ class Annotator:
             speechNodes = p.speechNodes
 
             for verbNode in speechNodes:
-                acc, subj = self.findAccSubj(allNodes, verbNode, p.indexSpeechVerb)
+                acc, subj = self.findAccSubj(allNodes, verbNode)
 
                 if (self.pattern1(acc, subj, verbNode, self.speechVerbs)
                     or self.pattern3(acc, subj, verbNode, self.speechVerbs)
@@ -100,9 +101,10 @@ class Annotator:
 
                     acc.markQuote()
                     subj.markAuthor()
+
                 elif not self.isFloresta:
                     # Searches for Pattern 5
-                    acc, subj, acc2 = self.findAccSubjAcc(allNodes, verbNode, p.indexSpeechVerb)
+                    acc, subj, acc2 = self.findAccSubjAcc(allNodes, verbNode)
 
                     if self.pattern5(acc, subj, acc2, verbNode, self.speechVerbs):
                         #print("ACHOU 5")
@@ -120,6 +122,8 @@ class Annotator:
                             acc.markQuote()
                             acc2.markQuote()
                             subj.markAuthor()
+
+                self.indexSpeechVerb += 1
 
         #f = findPattern(p, speechVerbs, pattern3)
         #f = findPattern(p, speechVerbs, pattern3NoSubj)
@@ -379,23 +383,23 @@ class Annotator:
     def isNoSubjVerb(self, verbNode):
         return "<nosubj>" in verbNode.stype
 
-    def findAccSubj(self, allNodes, verbNode, indexSpeechVerb):
+    def findAccSubj(self, allNodes, verbNode):
         if self.isFloresta:
-            acc, subj = self.searchAccSubjFloresta(allNodes, verbNode, indexSpeechVerb)
+            acc, subj = self.searchAccSubjFloresta(allNodes, verbNode)
         else:
-            acc, subj = self.searchAccSubj(allNodes, verbNode, indexSpeechVerb)
+            acc, subj = self.searchAccSubj(allNodes, verbNode)
 
         return acc, subj
 
-    def findAccSubjAcc(self, allNodes, verbNode, indexSpeechVerb):
+    def findAccSubjAcc(self, allNodes, verbNode):
         if self.isFloresta:
-            acc, subj, acc2 = self.searchAccSubjAccFloresta(allNodes, verbNode, indexSpeechVerb)
+            acc, subj, acc2 = self.searchAccSubjAccFloresta(allNodes, verbNode)
         else:
-            acc, subj, acc2 = self.searchAccSubjAcc(allNodes, verbNode, indexSpeechVerb)
+            acc, subj, acc2 = self.searchAccSubjAcc(allNodes, verbNode)
 
         return acc, subj, acc2
 
-    def searchAccSubjFloresta(self, allNodes, verbNode, indexSpeechVerb):
+    def searchAccSubjFloresta(self, allNodes, verbNode):
         accNode = None
         subjNode = None
 
@@ -406,7 +410,7 @@ class Annotator:
             if (node.level == verbNode.level 
                 and node.parent == verbNode.parent):
 
-                leftFromVerb, indexChild = self.markDepFloresta(node, verbNode, indexSpeechVerb, leftFromVerb, indexChild)
+                leftFromVerb, indexChild = self.markDepFloresta(node, verbNode, leftFromVerb, indexChild)
 
                 if node.type == 'Od' or node.type == '-Od':
                     #print("accNode: ", node.raw)
@@ -419,22 +423,22 @@ class Annotator:
 
         return accNode, subjNode
 
-    def markDepFloresta(self, node, verbNode, indexSpeechVerb, leftFromVerb, indexChild):
-        if node.txt not in ('.', ',', '»', ':'):
+    def markDepFloresta(self, node, verbNode, leftFromVerb, indexChild):
+        if node.txt not in ('.', ',', '»', '«', ':', ')', '('):
             if node.line == verbNode.line:
-                node.markDep('Root' + str(indexSpeechVerb))
+                node.markDep('Root' + str(self.indexSpeechVerb))
                 leftFromVerb = False
                 indexChild = 1
             elif leftFromVerb:
-                node.markDep('ChildL' + str(indexChild) + ':Root' + str(indexSpeechVerb))
+                node.markDep('ChildL' + str(indexChild) + ':Root' + str(self.indexSpeechVerb))
                 indexChild += 1
             else:
-                node.markDep('ChildR' + str(indexChild) + ':Root' + str(indexSpeechVerb))
+                node.markDep('ChildR' + str(indexChild) + ':Root' + str(self.indexSpeechVerb))
                 indexChild += 1
 
         return leftFromVerb, indexChild
 
-    def searchAccSubj(self, allNodes, verbNode, indexSpeechVerb):
+    def searchAccSubj(self, allNodes, verbNode):
         accNode = None
         subjNode = None
 
@@ -446,7 +450,7 @@ class Annotator:
             if (node.level == verbNode.parent.level 
                 and node.parent == verbNode.parent.parent):
 
-                leftFromVerb, indexChild = self.markDep(node, verbNode, indexSpeechVerb, leftFromVerb, indexChild)
+                leftFromVerb, indexChild = self.markDep(node, verbNode, leftFromVerb, indexChild)
 
                 # Defines ACC, SUBJ labels:
                 if node.type == 'ACC':
@@ -459,17 +463,17 @@ class Annotator:
 
         return accNode, subjNode
 
-    def markDep(self, node, verbNode, indexSpeechVerb, leftFromVerb, indexChild):
-        if node.txt not in ('.', ',', '»', ':'):
+    def markDep(self, node, verbNode, leftFromVerb, indexChild):
+        if node.txt not in ('.', ',', '»', '«', ':', ')', '('):
             if node.line == verbNode.parent.line:
-                node.markDep('Root' + str(indexSpeechVerb))
+                node.markDep('Root' + str(self.indexSpeechVerb))
                 leftFromVerb = False
                 indexChild = 1
             elif leftFromVerb:
-                node.markDep('ChildL' + str(indexChild) + ':Root' + str(indexSpeechVerb))
+                node.markDep('ChildL' + str(indexChild) + ':Root' + str(self.indexSpeechVerb))
                 indexChild += 1
             else:
-                node.markDep('ChildR' + str(indexChild) + ':Root' + str(indexSpeechVerb))
+                node.markDep('ChildR' + str(indexChild) + ':Root' + str(self.indexSpeechVerb))
                 indexChild += 1
 
         return leftFromVerb, indexChild
@@ -501,7 +505,7 @@ class Annotator:
 
         return accNode, subjNode
 
-    def searchAccSubjAcc(self, allNodes, verbNode, indexSpeechVerb):
+    def searchAccSubjAcc(self, allNodes, verbNode):
         accNode = None
         acc2Node = None
         subjNode = None
@@ -516,7 +520,7 @@ class Annotator:
             if (node.level == verbNode.parent.level 
                 and node.parent == verbNode.parent.parent):
 
-                leftFromVerb, indexChild = self.markDep(node, verbNode, indexSpeechVerb, leftFromVerb, indexChild)
+                leftFromVerb, indexChild = self.markDep(node, verbNode, leftFromVerb, indexChild)
 
                 if node.type == 'ACC': 
                     if not foundAcc:
@@ -529,7 +533,7 @@ class Annotator:
 
         return accNode, subjNode, acc2Node
 
-    def searchAccSubjAccFloresta(self, allNodes, verbNode, indexSpeechVerb):
+    def searchAccSubjAccFloresta(self, allNodes, verbNode):
         accNode = None
         acc2Node = None
         subjNode = None
