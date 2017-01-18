@@ -2,7 +2,7 @@
 
 A tool for processing Bosque and Floresta Corpus.
 
-This project generates a NLP corpus with annotations for Direct and Indirect Quotations for Portuguese. It's based on Bosque and part of Floresta Corpus, both part of [Floresta Sintá(c)tica](http://).
+This project generates a NLP corpus with annotations for Direct and Indirect Quotations for Portuguese. It's based on Bosque and part of Floresta Corpus, both part of [Floresta Sintá(c)tica](http://www.linguateca.pt/floresta/principal.html).
 
 It started as single Python script, but it evolves into an automatic annotator with sofisticated rules. The code need to be refactor in order to future improvements.
 
@@ -27,4 +27,4 @@ The annotation rules are coded in `corpus_annotate.py`. For any changes, like no
 
 ## Objects
 
-The first step is parsing Bosque and Floresta and create a tree of nodes objects. Each node reflects a node of the *árvores deitadas" format, which is how data in Bosque and Floresta are stored. The script `corpus.py` is responsible for this task.
+The first step is parsing Bosque and Floresta and create a tree of nodes objects. Each node reflects a node of the *árvores deitadas* format, which is how data in Bosque and Floresta are stored. The script `corpus.py` is responsible for this task.
