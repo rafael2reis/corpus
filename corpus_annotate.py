@@ -20,6 +20,10 @@ class Annotator:
         self.files = {}
         self.fileName = ''
         self.indexSpeechVerb = 1
+        self.quantPatterns = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.quantPatternsNoSubj = [0, 0, 0, 0, 0, 0, 0, 0]
+        self.patternsList = []
+        self.patternsNoSubjList = []
 
     def annotateAll(self, corpus=None):
         #speechVerbs = SpeechVerbs()
@@ -40,8 +44,8 @@ class Annotator:
             f = self.findPattern(p, self.speechVerbs, self.pattern3, '3')
             f = self.findPattern(p, self.speechVerbs, self.pattern3NoSubj, '3ns')
             if not self.isFloresta:
-                f = self.findPattern5(p, self.speechVerbs, self.pattern5)
-                f = self.findPattern6(p, self.speechVerbs, self.pattern6)
+                f = self.findPattern5(p, self.speechVerbs, self.pattern4)
+                f = self.findPattern6(p, self.speechVerbs, self.pattern5)
             """
             p = corpus.next()
 
@@ -86,6 +90,9 @@ class Annotator:
             self.files[str(x) + 'ns_big'].close()
 
     def annotate(self, p=None):
+        self.patternsList = []
+        self.patternsNoSubjList = []
+
         if p.speechVerb:
             allNodes = p.nodes
             speechNodes = p.speechNodes
@@ -93,46 +100,88 @@ class Annotator:
             for verbNode in speechNodes:
                 acc, subj = self.findAccSubj(allNodes, verbNode)
 
-                if (self.pattern1(acc, subj, verbNode, self.speechVerbs)
-                    or self.pattern3(acc, subj, verbNode, self.speechVerbs)
-                    or self.pattern2(acc, subj, verbNode, self.speechVerbs)):
-
-                    #print("ACHOU 1, 2 ou 3")
-
+                if self.pattern1(acc, subj, verbNode, self.speechVerbs):
                     acc.markQuote()
+                    acc.markPattern('1')
                     subj.markAuthor()
 
+                    self.quantPatterns[1] += 1
+                    self.patternsList.append(1)
+
+                elif self.pattern3(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('3')
+                    subj.markAuthor()
+
+                    self.quantPatterns[3] += 1
+                    self.patternsList.append(3)
+
+                elif self.pattern2(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('2')
+                    subj.markAuthor()
+
+                    self.quantPatterns[2] += 1
+                    self.patternsList.append(2)
+
+                elif self.pattern1NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('1nosubj')
+                    acc.markNosubj()
+
+                    self.quantPatternsNoSubj[1] += 1
+                    self.patternsNoSubjList.append(1)
+
+                elif self.pattern3NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('3nosubj')
+                    acc.markNosubj()
+
+                    self.quantPatternsNoSubj[3] += 1
+                    self.patternsNoSubjList.append(3)
+
+                elif self.pattern2NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('2nosubj')
+                    acc.markNosubj()
+
+                    self.quantPatternsNoSubj[2] += 1
+                    self.patternsNoSubjList.append(2)
+
                 elif not self.isFloresta:
-                    # Searches for Pattern 5
+                    # Searches for Pattern 4
                     acc, subj, acc2 = self.findAccSubjAcc(allNodes, verbNode)
 
-                    if self.pattern5(acc, subj, acc2, verbNode, self.speechVerbs):
-                        #print("ACHOU 5")
+                    if self.pattern4(acc, subj, acc2, verbNode, self.speechVerbs):
+                        #print("ACHOU 4")
 
                         acc.markQuote()
+                        acc.markPattern('4')
                         acc2.markQuote()
+                        acc2.markPattern('4')
                         subj.markAuthor()
+
+                        self.quantPatterns[4] += 1
+                        self.patternsList.append(4)
                     else:
-                        # Searches for Pattern 6
+                        # Searches for Pattern 5
                         acc, subj, acc2 = self.searchAccSubjMinusAcc(allNodes, verbNode)
 
-                        if self.pattern6(acc, subj, acc2, verbNode, self.speechVerbs):
-                            #print("ACHOU 6")
+                        if self.pattern5(acc, subj, acc2, verbNode, self.speechVerbs):
+                            #print("ACHOU 5")
 
                             acc.markQuote()
+                            acc.markPattern('5')
                             acc2.markQuote()
+                            acc2.markPattern('5')
                             subj.markAuthor()
+
+                            self.quantPatterns[5] += 1
+                            self.patternsList.append(5)
 
                 self.indexSpeechVerb += 1
 
-        #f = findPattern(p, speechVerbs, pattern3)
-        #f = findPattern(p, speechVerbs, pattern3NoSubj)
-        #f = self.findPattern(p, self.speechVerbs, self.pattern1)
-        #f = findPattern(p, speechVerbs, pattern1NoSubj)
-        #f = findPattern(p, speechVerbs, pattern2)
-        #f = findPattern(p, speechVerbs, pattern2NoSubj)
-        #f = findPattern5(p, speechVerbs, pattern5)
-        #f = findPattern6(p, speechVerbs, pattern6)
+        return self.patternsList, self.patternsNoSubjList
 
     def findPattern(self, p, speechVerbs, pattern, number):
         exist = False
@@ -183,7 +232,7 @@ class Annotator:
         """
         return (acc and self.isNotSubj(subj) 
                     and self.hasCloseQuotesComma(acc)
-                    and self.isNoSubjVerb(verbNode)
+                    #and self.isNoSubjVerb(verbNode)
                     and (verbNode.speechVerb in speechVerbs.pattern1))
 
     def pattern2(self, acc, subj, verbNode, speechVerbs):
@@ -201,7 +250,7 @@ class Annotator:
             VSAY SUBJ[word=:] [word="|«] ACC
         """
         return (acc and self.isNotSubj(subj)
-                    and self.isNoSubjVerb(verbNode)
+                    #and self.isNoSubjVerb(verbNode)
                     and self.hasColonOpenQuotes(verbNode, acc)
                     and (verbNode.speechVerb in speechVerbs.pattern2))
 
@@ -218,7 +267,7 @@ class Annotator:
             SUBJ VSAY ACC[que]
         """
         return (acc and self.isNotSubj(subj)
-                    and self.isNoSubjVerb(verbNode)
+                    #and self.isNoSubjVerb(verbNode)
                     and self.hasChildQue(acc)
                     and (verbNode.speechVerb in speechVerbs.pattern3))
         
@@ -242,8 +291,8 @@ class Annotator:
                     return True
         return False
 
-    def pattern5(self, acc, subj, acc2, verbNode, speechVerbs):
-        """
+    def pattern4(self, acc, subj, acc2, verbNode, speechVerbs):
+        """ antigo padrao 5
             ACC [word="|»] [word=,] VSAY SUBJ [word=,] [word="|«] ACC
             ACC [word="|»] [word=,] SUBJ VSAY [word=,] [word="|«] ACC
         """
@@ -251,7 +300,7 @@ class Annotator:
                     and self.isValidSubj(subj)
                     and self.hasCloseQuotesComma(acc)
                     and (self.hasCommaOpenQuotes(subj, acc2) or self.hasCommaOpenQuotes(verbNode.parent, acc2))
-                    and (verbNode.speechVerb in speechVerbs.pattern5))
+                    and (verbNode.speechVerb in speechVerbs.pattern4))
 
     def findPattern6(self, p, speechVerbs, pattern):
 
@@ -268,8 +317,8 @@ class Annotator:
                     return True
         return False
 
-    def pattern6(self, acc, subj, acc2, verbNode, speechVerbs):
-        """
+    def pattern5(self, acc, subj, acc2, verbNode, speechVerbs):
+        """ antigo padrao 6
             ACC [!="|'|»] [word=--|,] VSAY SUBJ [word=--|,] [word!=" | '|«] –ACC
             ACC [word!=""\".*|'|»"] [word="--|,"] SUBJ VSAY [word="--|,"] [word!=""\".*| '|«"] -ACC
         """
@@ -281,7 +330,7 @@ class Annotator:
                         or (self.hasDashInBetween(acc, verbNode.parent)
                             and self.isNext(subj, verbNode.parent)
                             and self.hasDashInBetween(subj, acc2)))
-                    and (verbNode.speechVerb in speechVerbs.pattern6))
+                    and (verbNode.speechVerb in speechVerbs.pattern5))
 
     def pattern7(self, acc, subj, verbNode, speechVerbs):
         """
@@ -330,8 +379,8 @@ class Annotator:
     def hasCloseQuotesComma(self, acc):
 
         if not self.isFloresta:
-            if acc.next and acc.next.next:
-                return acc.next.txt in ("»", "»\"", "\"") and acc.next.next.txt in (",")
+            if acc.next and acc.next.posterior:
+                return acc.next.txt in ("»", "»\"", "\"") and acc.next.posterior.txt in (",")
         else:
             node = acc.posterior
             while node:

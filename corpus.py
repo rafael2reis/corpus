@@ -331,6 +331,8 @@ class Node:
         self.quote = False
         self.author = False
         self.dep = ''
+        self.nosubj = False
+        self.pattern = ''
 
     def text(self):
         t = self.txt
@@ -348,6 +350,12 @@ class Node:
         for c in self.child:
             c.markQuote()
 
+    def markNosubj(self):
+        self.nosubj = True
+
+        for c in self.child:
+            c.markNosubj()
+
     def markAuthor(self):
         self.author = True
 
@@ -355,10 +363,17 @@ class Node:
             c.markAuthor()
 
     def markDep(self, label):
-        self.dep = label
+        if self.dep == '':
+            self.dep = label
+
+            for c in self.child:
+                c.markDep(label)
+
+    def markPattern(self, label):
+        self.pattern = label
 
         for c in self.child:
-            c.markDep(label)
+            c.markPattern(label)
 
 class InvalidArgumentException(Exception):
     pass
