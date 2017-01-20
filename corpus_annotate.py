@@ -123,30 +123,30 @@ class Annotator:
 
                     self.quantPatterns[2] += 1
                     self.patternsList.append(2)
-                
-               # elif self.pattern1NoSubj(acc, subj, verbNode, self.speechVerbs):
-               #     acc.markQuote()
-               #     acc.markPattern('1nosubj')
-               #     acc.markNosubj()
 
-             #  #     self.quantPatternsNoSubj[1] += 1
-               #     self.patternsNoSubjList.append(1)
+                elif self.pattern1NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('1nosubj')
+                    acc.markNosubj()
 
-             #  # elif self.pattern3NoSubj(acc, subj, verbNode, self.speechVerbs):
-               #     acc.markQuote()
-               #     acc.markPattern('3nosubj')
-               #     acc.markNosubj()
+                    self.quantPatternsNoSubj[1] += 1
+                    self.patternsNoSubjList.append(1)
 
-             #  #     self.quantPatternsNoSubj[3] += 1
-               #     self.patternsNoSubjList.append(3)
+                elif self.pattern3NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('3nosubj')
+                    acc.markNosubj()
 
-             #  # elif self.pattern2NoSubj(acc, subj, verbNode, self.speechVerbs):
-               #     acc.markQuote()
-               #     acc.markPattern('2nosubj')
-               #     acc.markNosubj()
+                    self.quantPatternsNoSubj[3] += 1
+                    self.patternsNoSubjList.append(3)
 
-             #  #     self.quantPatternsNoSubj[2] += 1
-               #     self.patternsNoSubjList.append(2)
+                elif self.pattern2NoSubj(acc, subj, verbNode, self.speechVerbs):
+                    acc.markQuote()
+                    acc.markPattern('2nosubj')
+                    acc.markNosubj()
+
+                    self.quantPatternsNoSubj[2] += 1
+                    self.patternsNoSubjList.append(2)
 
                 elif not self.isFloresta:
                     # Searches for Pattern 4
