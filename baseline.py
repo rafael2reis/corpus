@@ -3,7 +3,23 @@
 # Copyright (c) 2016 Rafael Reis
 #
 """
-corpus generator module - Functions to generate a Corpus based on GloboQuotes format.
+baseline generator module - Just a copy of corpus_gen.py, with
+some codes to generate a baseline Extractor. It's not finished 
+at all.
+
+What need to be done is creating a method with lines 160-183
+and test if the parser is correct. It just need to colect all Roots
+in the dependency annotation. Inside a Root object, there is an array
+with its children. Each child (dep) has an attribute size, with the 
+number of tokens it has.
+
+Lines 221-269 is the baseline itself: for each Root, the system
+says the quote is the Dep in which size is maximum (among its
+siblings). The author is either:
+
+1) The left most Dep or
+2) If (1) is Dep Size Max, the Dep before or
+3) If Dep Size Max is the only Dep, author is "Dummy"
 
 """
 __version__="1.0"
@@ -77,6 +93,26 @@ def genByCorpus(c, lineNum, rawFeeds):
     quantQuotes = 0
     quantPronomes = 0
 
+    # BASELINE
+    corr = 0.0
+    incorr = 0.0
+    corrD = 0.0 # Correct Dummy
+    incorrD = 0.0 # Incorrect Dummy
+
+    quot = 0.0 # Num of real quotations
+    corrQuot = 0.0 # Num of correct quotations
+
+    # Direct Quotes
+    dCorr = 0.0
+    dIncorr = 0.0
+    dCorrQuot = 0.0 
+
+    # Indirect Quotes
+    iCorr = 0.0
+    iIncorr = 0.0
+    iCorrQuot = 0.0
+    # /BASELINE
+
     feeds = corpus.groupByFeed(c)
 
     speechVerbs = corpus.SpeechVerbs()
@@ -109,6 +145,13 @@ def genByCorpus(c, lineNum, rawFeeds):
             isQuote = False
             achouAutor = False
 
+            # Base line
+            depLast = '-'
+            depSize = 0
+            piece.roots = []
+            root = Root()
+            rootLast = '-'
+            #
             for node in piece.nodes:
                 if isValidToken(node):
                     quantTokens += 1
@@ -125,6 +168,31 @@ def genByCorpus(c, lineNum, rawFeeds):
                     author = str(index) if node.author else '-'
                     dep = node.dep if node.dep else '-'
                     pattern = node.pattern if node.pattern else '-'
+
+                    # BASELINE
+                    rootCurr = dep[-1:]
+                    if rootCurr != rootLast:
+                        if rootLast != '-':
+                            print("rootCurr, rootLast:", rootCurr, rootLast)
+                            print("deps:", len(root.deps))
+                            piece.roots.append(root)
+                            root = Root()
+                        rootLast = rootCurr
+
+                    if dep != depLast:
+                        if depLast[:4] != 'Root' and depLast != '-':
+                            o = Dep()
+                            o.label = depLast
+                            o.size = depSize
+                            o.quote = quote != '-'
+                            o.author = author != '-'
+                            o.pattern = pattern
+                            root.addDep(o)
+                        depLast = dep
+                        depSize = 1
+                    else:
+                        depSize += 1
+                    # /BASELINE
 
                     """
                     if node.author and not achouAutor:
@@ -155,6 +223,57 @@ def genByCorpus(c, lineNum, rawFeeds):
 
                 index += 1
 
+            # BASE LINE ----------------------
+            for r in piece.roots:
+                depMax = Dep()
+                depLeft = Dep()
+
+                i = 0
+                size = len(r.deps)
+
+                print("size: ", size)
+
+                for d in r.deps:
+                    if d.quote:
+                        print("pattern: ", d.pattern)
+                        quot += 1
+
+                        indirect =  '3' in d.pattern
+                        if indirect:
+                            iCorrQuot += 1
+                        else:
+                            dCorrQuot += 1
+
+                    if d.size > depMax.size:
+                        depMax = d
+
+                    if i == 0 or (i + 1 < size):
+                        depLeft = d
+
+                    i += 1
+
+                if depMax.quote:
+                    indirect = '3' in depMax.pattern
+                    corrQuot += 1
+
+                    if depLeft.author:
+                        corr += 1
+
+                        if indirect:
+                            iCorr += 1
+                        else:
+                            dCorr += 1
+                    else:
+                        incorr += 1
+
+                        if indirect:
+                            iIncorr += 1
+                        else:
+                            dIncorr += 1
+                else:
+                    incorrD += 1
+            # /BASELINE ----------------------
+
         #print("")
         lineNum += 1
         rawFeeds.append(rawFeed)
@@ -171,6 +290,21 @@ def genByCorpus(c, lineNum, rawFeeds):
 
     precision = corr / (corr + incorr + incorrD)
     recall = corr / quot
+
+    print("BASELINE:\n")
+    print("Direct Association:--------------------------")
+    print("P =", dPrecision)
+    print("R =", dRecall)
+    print("\nIndirect Association:--------------------------")
+    print("P =", iPrecision)
+    print("R =", iRecall)
+    print("\nQuote Extraction:-------------")
+    print("P =", pQuoteX)
+    print("R =", rQuoteX)
+    print("\nAll:--------------------------")
+    print("P =", precision)
+    print("R =", recall)
+    # /BASELINE
 
     return len(feeds), quantTokens, quantSentences, quantQuotes, quantPronomes, ca.quantPatterns, ca.quantPatternsNoSubj
 

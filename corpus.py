@@ -312,6 +312,7 @@ class Piece:
         self.id = ""
         self.indexSpeechVerb = 0
         self.source = ""
+        self.roots = []
 
 class Node:
 
